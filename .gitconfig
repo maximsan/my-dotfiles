@@ -1,0 +1,20 @@
+[user]
+    name = maksimshchutski
+    email = maksim.shchutski@itrexgroup.com
+[core]
+	editor = code --wait
+	autocrlf = input
+[init]
+	defaultBranch = main
+[pull]
+	rebase = false
+[alias]
+	mc = merge --continue
+	co = checkout
+	pf = push --force
+	p = push
+	c = commit
+	ca = commit --amend
+	s = status
+	br = branch
+	st = status
