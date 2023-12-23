@@ -18,3 +18,5 @@
 	s = status
 	br = branch
 	st = status
+	l10 = log --pretty=oneline -10
+	l = log --oneline

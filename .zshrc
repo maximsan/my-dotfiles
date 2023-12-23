@@ -100,15 +100,26 @@ source $ZSH/oh-my-zsh.sh
 # alias zshconfig="mate ~/.zshrc"
 # alias ohmyzsh="mate ~/.oh-my-zsh"
 
-export PATH=/opt/homebrew/bin:$PATH
+# brew
+export PATH="/usr/local/bin:$PATH"    # arm64e homebrew path (m1   )
+export PATH="/opt/homebrew/bin:$PATH" # x86_64 homebrew path (intel)
+
+alias mbrew="arch -arm64 /opt/homebrew/bin/brew" # arm64 homebrew path (m1   )
+alias ibrew="arch -x86_64 /usr/local/bin/brew"    # x86_64 homebrew path (intel)
+
+# nwm
 export NVM_DIR="$HOME/.nvm"
 [ -s "$NVM_DIR/nvm.sh" ] && \. "$NVM_DIR/nvm.sh"  # This loads nvm
 [ -s "$NVM_DIR/bash_completion" ] && \. "$NVM_DIR/bash_completion"  # This loads nvm bash_completion
-export PATH=/Users/maksimshchutski/.nvm/versions/node/v16.17.0/bin:/opt/homebrew/bin:/usr/local/bin:/usr/bin:/bin:/usr/sbin:
+#export PATH=/Users/maksimshchutski/.nvm/versions/node/v16.17.0/bin:/opt/homebrew/bin:/usr/local/#bin:/usr/bin:/bin:/usr/sbin:
 
+# thefuck
 eval $(thefuck --alias)
+
+# ruby
 export PATH="/opt/homebrew/opt/ruby/bin:$PATH"
 
+# golang
 export PATH=$PATH:/usr/local/go/bin
 export PATH=$PATH:$GOPATH/bin
 
@@ -127,4 +138,5 @@ case ":$PATH:" in
   *":$PNPM_HOME:"*) ;;
   *) export PATH="$PNPM_HOME:$PATH" ;;
 esac
-# pnpm end
+# pnpm endexport PATH="/opt/homebrew/opt/node@18/bin:$PATH"
+export PATH="/opt/homebrew/opt/node@18/bin:$PATH"
