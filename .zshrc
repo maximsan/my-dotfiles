@@ -140,3 +140,10 @@ case ":$PATH:" in
 esac
 # pnpm endexport PATH="/opt/homebrew/opt/node@18/bin:$PATH"
 export PATH="/opt/homebrew/opt/node@18/bin:$PATH"
+export VOLTA_HOME="$HOME/.volta"
+export PATH="$VOLTA_HOME/bin:$PATH"
+
+# pyend setup to manage python versions properly
+if command -v pyenv 1>/dev/null 2>&1; then
+  eval "$(pyenv init -)"
+fi
