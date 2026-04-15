@@ -1,6 +1,6 @@
 [user]
-    name = maksimshchutski
-    email = maksim.shchutski@itrexgroup.com
+	name = maximsan
+	email = maximuzz@yandex.ru
 	
 [includeIf "gitdir:~/Projects/work/itrex/noom/"]
 	path = ~/Projects/work/itrex/noom/.gitconfig
@@ -8,6 +8,7 @@
 [core]
 	editor = code --wait
 	autocrlf = input
+	hooksPath = /Users/maksimshchutski/.git-hooks
 [init]
 	defaultBranch = main
 [pull]
@@ -25,8 +26,8 @@
 	l10 = log --pretty=oneline -10
 	l = log --oneline
 	lg = log --color --graph --pretty=format:'%Cred%h%Creset -%C(yellow)%d%Creset %s %Cgreen(%cr) %C(bold blue)<%an>%Creset' --abbrev-commit
-[filter "lfs"]
-	clean = git-lfs clean -- %f
-	smudge = git-lfs smudge -- %f
-	process = git-lfs filter-process
-	required = true
+	lsha = rev-parse HEAD
+	lc = log -1 HEAD
+	visual = !gitk
+[http]
+	postBuffer = 524288000
