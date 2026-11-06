@@ -15,6 +15,7 @@ ln -s ~/.dotfiles/.zshrc ~/.zshrc
 ln -s ~/.dotfiles/.gitconfig ~/.gitconfig
 ln -s ~/.dotfiles/.zshenv ~/.zshenv
 ln -s ~/.dotfiles/.git-hooks ~/.git-hooks
+ln -s ~/.dotfiles/.git-template ~/.git-template
 ```
 
 ## Package Management
