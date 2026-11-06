@@ -57,9 +57,6 @@ alias -s tsx=webstorm
 # aliases
 alias ibrew="arch -x86_64 /usr/local/bin/brew"    # x86_64 homebrew path (intel)
 
-# thefuck
-eval $(thefuck --alias)
-
 # ruby
 export PATH="/opt/homebrew/opt/ruby/bin:$PATH"
 
@@ -67,7 +64,7 @@ export PATH="/opt/homebrew/opt/ruby/bin:$PATH"
 export PATH=$PATH:/usr/local/go/bin
 export PATH=$PATH:$GOPATH/bin
 
-# bit
+# bin
 export PATH="$PATH:/Users/maksimshchutski/bin"
 
 # rust
@@ -109,3 +106,23 @@ export PATH=/Users/maksimshchutski/.opencode/bin:$PATH
 # tunnel
 export TUNNELTO_INSTALL="/Users/maksimshchutski/.tunnelto"
 export PATH="$TUNNELTO_INSTALL/bin:$PATH"
+
+# sbin
+export PATH="/opt/homebrew/sbin:$PATH"
+
+# flutter pub manager
+export PATH="$PATH":"$HOME/.pub-cache/bin"
+
+## [Completion]
+## Completion scripts setup. Remove the following line to uninstall
+[[ -f /Users/maksimshchutski/.dart-cli-completion/zsh-config.zsh ]] && . /Users/maksimshchutski/.dart-cli-completion/zsh-config.zsh || true
+## [/Completion]
+
+
+# pnpm
+export PNPM_HOME="/Users/maksimshchutski/Library/pnpm"
+case ":$PATH:" in
+  *":$PNPM_HOME/bin:"*) ;;
+  *) export PATH="$PNPM_HOME/bin:$PATH" ;;
+esac
+# pnpm end
