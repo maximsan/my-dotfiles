@@ -20,6 +20,8 @@ git clone <repo> ~/.dotfiles
 
 ln -s ~/.dotfiles/.zshrc ~/.zshrc
 ln -s ~/.dotfiles/.gitconfig ~/.gitconfig
+ln -s ~/.dotfiles/.zshenv ~/.zshenv
+ln -s ~/.dotfiles/.git-hooks ~/.git-hooks
 ```
 
 4. Install Homebrew, followed by the software listed in the Brewfile.

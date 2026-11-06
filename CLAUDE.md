@@ -13,6 +13,8 @@ The dotfiles are activated by symlinking them:
 ```zsh
 ln -s ~/.dotfiles/.zshrc ~/.zshrc
 ln -s ~/.dotfiles/.gitconfig ~/.gitconfig
+ln -s ~/.dotfiles/.zshenv ~/.zshenv
+ln -s ~/.dotfiles/.git-hooks ~/.git-hooks
 ```
 
 ## Package Management
@@ -27,12 +29,15 @@ brew bundle dump --describe --file ~/.dotfiles/Brewfile
 
 ## Git Hooks
 
-A global `commit-msg` hook lives at `~/.git-hooks/commit-msg` (referenced by `.gitconfig`'s `core.hooksPath`). It strips `Co-Authored-By:` lines from AI tools (Claude, Copilot, ChatGPT, Gemini, Cursor) while preserving human co-author lines.
+A global `commit-msg` hook lives at `~/.git-hooks/commit-msg` (referenced by `.gitconfig`'s `core.hooksPath`). It strips `Co-Authored-By:` and "Generated with" lines naming AI tools, and keeps human co-author lines. The scripts are tracked in `.git-hooks/`.
+
+`hook.*` entries in `.gitconfig` run `~/.git-hooks/strip-ai-attribution` and `~/.git-hooks/branch-name-rule` in every repo, including one with its own `core.hooksPath`. They need Git 2.54 or later.
 
 ### Running hook tests
 
 ```zsh
 bash tests/commit-msg.test.sh
+bash tests/branch-name-rule.test.sh
 ```
 
 ## Key Configuration

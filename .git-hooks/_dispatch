@@ -1,0 +1,65 @@
+#!/bin/sh
+# Global git hook dispatcher, installed via `git config --global core.hooksPath`.
+#
+# Goal: enforce a machine-wide rule that no commit is attributed to an AI agent,
+# regardless of which tool (Claude Code, Cursor, Copilot, Codex, ...) created it,
+# while still running each repository's OWN hooks transparently. This one script
+# is symlinked to every standard hook name; for any hook it first runs the
+# repo-local hook of the same name, then — only for `commit-msg` — strips AI
+# co-author trailers and "Generated with ..." bylines from the message.
+#
+# Recursion safety: a naive dispatcher fork-bombs the machine if a repository's
+# local hook is a symlink OR a copy of this dispatcher (git -> dispatcher ->
+# local hook -> dispatcher -> ...). Two independent guards prevent that:
+#   1. an exported reentrancy marker, which also catches *copies* of this script
+#      that a path comparison cannot detect;
+#   2. a canonical (symlink-resolved) path comparison, so we never delegate to a
+#      local hook that is really this same file.
+
+hook_name="$(basename "$0")"
+
+# --- Guard 1: reentrancy marker (scoped per hook name) -------------------------
+# The ":name:" framing avoids substring collisions between hook names.
+already_active=
+case ":${GIT_DISPATCH_ACTIVE:-}:" in
+  *":$hook_name:"*) already_active=1 ;;
+esac
+GIT_DISPATCH_ACTIVE="${GIT_DISPATCH_ACTIVE:-}:$hook_name"
+export GIT_DISPATCH_ACTIVE
+
+# Locate the repository-local hook in the REAL git dir, never core.hooksPath.
+# --git-common-dir keeps linked worktrees pointing at the shared hooks dir;
+# fall back to --git-dir on older git.
+git_dir="$(git rev-parse --git-common-dir 2>/dev/null || git rev-parse --git-dir 2>/dev/null)"
+[ -n "$git_dir" ] || git_dir=".git"
+local_hook="$git_dir/hooks/$hook_name"
+
+# --- Guard 2: canonical path comparison ---------------------------------------
+# Resolve symlinks (runs in a subshell via command substitution, so the `cd`
+# never affects the caller's working directory).
+canonical() {
+  cp=$1; n=0
+  while [ -L "$cp" ] && [ "$n" -lt 40 ]; do
+    d=$(dirname "$cp"); t=$(readlink "$cp")
+    case "$t" in
+      /*) cp=$t ;;
+      *)  cp="$d/$t" ;;
+    esac
+    n=$((n + 1))
+  done
+  d=$(cd "$(dirname "$cp")" 2>/dev/null && pwd -P) || return 1
+  printf '%s/%s\n' "$d" "$(basename "$cp")"
+}
+self_real=$(canonical "$0" 2>/dev/null)
+local_real=$(canonical "$local_hook" 2>/dev/null)
+
+# Delegate to the repo's own hook first — unless we are re-entering, it is
+# missing/not executable, or it resolves to this very dispatcher.
+if [ -z "$already_active" ] && [ -x "$local_hook" ] \
+   && [ -n "$local_real" ] && [ "$local_real" != "$self_real" ]; then
+  "$local_hook" "$@" || exit $?
+fi
+
+# --- commit-msg only: strip AI attribution ------------------------------------
+[ "$hook_name" = "commit-msg" ] || exit 0
+exec "$(dirname "$self_real")/strip-ai-attribution" "$@"

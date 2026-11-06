@@ -1,0 +1,31 @@
+#!/bin/sh
+# Removes AI attribution from a commit message. Git runs it for every repo through
+# a hook.* entry in the global config, so a repo with its own core.hooksPath is
+# covered too. Safe to run twice on one message.
+
+
+msg_file=$1
+[ -n "$msg_file" ] && [ -f "$msg_file" ] || exit 0
+
+# Name the Claude Code session that made the commit, so `claude --resume <id>`
+# reopens it. Claude Code sets this variable in every shell it starts.
+if [ -n "${CLAUDE_CODE_SESSION_ID:-}" ]; then
+  git interpret-trailers --in-place --if-exists addIfDifferent \
+    --trailer "Claude-Session-Id: $CLAUDE_CODE_SESSION_ID" "$msg_file"
+fi
+
+# Curated AI identifiers. Deliberately NOT a broad ".*AI.*" match, which would
+# also strip human co-authors whose name merely contains "ai" (e.g. Mikhail).
+ai='claude|anthropic|copilot|cursor|codex|openai|chatgpt|gpt-[0-9]|gemini|aider|devin|codeium|windsurf|tabnine|sourcegraph|noreply@anthropic\.com'
+
+tmp=$(mktemp "${TMPDIR:-/tmp}/commit-msg.XXXXXX") || exit 0
+grep -ivE "^[[:space:]]*co-authored-by:.*($ai)" "$msg_file" \
+  | grep -ivE "^[^[:alnum:]]*generated (with|by|using) .*($ai)" \
+  > "$tmp"
+
+# Never let stripping yield an empty message; keep the original if it would.
+if grep -q '[^[:space:]]' "$tmp" 2>/dev/null; then
+  cat "$tmp" > "$msg_file"
+fi
+rm -f "$tmp"
+exit 0

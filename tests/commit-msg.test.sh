@@ -1,5 +1,7 @@
 #!/bin/sh
 HOOK="$HOME/.git-hooks/commit-msg"
+# The hook adds a session trailer inside Claude Code, which would change clean messages here.
+unset CLAUDE_CODE_SESSION_ID
 TMPFILE=$(mktemp)
 
 # Case 1: strips Claude

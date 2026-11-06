@@ -32,3 +32,12 @@
 	skip = push -f --no-verify
 [http]
 	postBuffer = 524288000
+[hook "strip-ai-attribution"]
+	event = commit-msg
+	command = \"$HOME/.git-hooks/strip-ai-attribution\"
+[hook "branch-name-creating"]
+	event = reference-transaction
+	command = \"$HOME/.git-hooks/branch-name-rule\" creating
+[hook "branch-name-pushing"]
+	event = pre-push
+	command = \"$HOME/.git-hooks/branch-name-rule\" pushing

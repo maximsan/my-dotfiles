@@ -100,8 +100,6 @@ export PATH="$PATH:/Users/maksimshchutski/.lmstudio/bin"
 # Added by Windsurf
 export PATH="/Users/maksimshchutski/.codeium/windsurf/bin:$PATH"
 
-# opencode
-export PATH=/Users/maksimshchutski/.opencode/bin:$PATH
 
 # tunnel
 export TUNNELTO_INSTALL="/Users/maksimshchutski/.tunnelto"
