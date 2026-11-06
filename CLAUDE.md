@@ -8,15 +8,7 @@ This is a macOS dotfiles repository. It contains shell configuration, git config
 
 ## Symlink Setup
 
-The dotfiles are activated by symlinking them:
-
-```zsh
-ln -s ~/.dotfiles/.zshrc ~/.zshrc
-ln -s ~/.dotfiles/.gitconfig ~/.gitconfig
-ln -s ~/.dotfiles/.zshenv ~/.zshenv
-ln -s ~/.dotfiles/.git-hooks ~/.git-hooks
-ln -s ~/.dotfiles/.git-template ~/.git-template
-```
+The dotfiles are activated by symlinks. The commands are in step 3 of `README.md`.
 
 ## Package Management
 
@@ -30,9 +22,16 @@ brew bundle dump --describe --file ~/.dotfiles/Brewfile
 
 ## Git Hooks
 
-A global `commit-msg` hook lives at `~/.git-hooks/commit-msg` (referenced by `.gitconfig`'s `core.hooksPath`). It strips `Co-Authored-By:` and "Generated with" lines naming AI tools, and keeps human co-author lines. The scripts are tracked in `.git-hooks/`.
+The hook scripts are tracked in `.git-hooks/`. They reach every repo by two routes:
 
-`hook.*` entries in `.gitconfig` run `~/.git-hooks/strip-ai-attribution` and `~/.git-hooks/branch-name-rule` in every repo, including one with its own `core.hooksPath`. They need Git 2.54 or later.
+- `.gitconfig`'s `core.hooksPath` runs `_dispatch` under each common hook name. It runs the repo's own hook first, and works on Git versions older than 2.54.
+- `hook.*` entries in `.gitconfig` run `strip-ai-attribution` and `branch-name-rule` even in a repo with its own `core.hooksPath`. They need Git 2.54 or later, which added hooks defined in config.
+
+`strip-ai-attribution` removes AI `Co-Authored-By:` and "Generated with", "by" or "using" lines, and keeps human co-authors. Inside Claude Code it also adds a `Claude-Session-Id:` line. Running it twice on one message is safe.
+
+`branch-name-rule` refuses branch names outside `<type>/<lowercase-with-dashes>` in maximsan's GitHub repos.
+
+`.git-template/` is copied into each new repo. Its `commit-msg` hook runs the global one.
 
 ### Running hook tests
 

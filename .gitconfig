@@ -8,10 +8,10 @@
 [core]
 	editor = code --wait
 	autocrlf = input
-	hooksPath = /Users/maksimshchutski/.git-hooks
+	hooksPath = ~/.git-hooks
 [init]
 	defaultBranch = main
-	templateDir = /Users/maksimshchutski/.git-template
+	templateDir = ~/.git-template
 [pull]
 	rebase = false
 [alias]

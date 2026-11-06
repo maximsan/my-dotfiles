@@ -1,5 +1,6 @@
 #!/bin/sh
-# Enforces branch names in the owner's GitHub repos: <type>/<kebab-slug>.
+# Enforces branch names in maximsan's GitHub repos: <type>/<lowercase-with-dashes>,
+# such as fix/login-retry.
 # Git runs it for every repo through hook.* entries in the global config, so a
 # repo with its own core.hooksPath is covered too.
 #   creating: reference-transaction, when any tool creates a local branch
@@ -9,14 +10,17 @@
 # exists on GitHub can always be checked out.
 
 BRANCH_TYPES='feat|fix|chore|docs|refactor|test|prototype|research'
-OWNER_REPO='*github.com[:/]maximsan/*'
+OWNER_REPO_GLOB='*github.com[:/]maximsan/*'
 
 is_conventional() {
   printf '%s\n' "$1" | grep -Eq "^($BRANCH_TYPES)/[a-z0-9]+([-.][a-z0-9]+)*\$"
 }
 
-is_zero() {
+# Git passes an all-zero id for a ref that doesn't exist.
+creates_ref() {
   case "$1" in *[!0]*) return 1 ;; esac
+  case "$2" in *[!0]*) return 0 ;; esac
+  return 1
 }
 
 refuse() {
@@ -28,13 +32,13 @@ case "$1" in
   creating)
     [ "$2" = prepared ] || { cat >/dev/null; exit 0; }
     # shellcheck disable=SC2254
-    case "$(git remote get-url origin 2>/dev/null)" in $OWNER_REPO) ;; *) cat >/dev/null; exit 0 ;; esac
+    case "$(git remote get-url origin 2>/dev/null)" in $OWNER_REPO_GLOB) ;; *) cat >/dev/null; exit 0 ;; esac
     while read -r old new ref; do
       case "$ref" in refs/heads/*) ;; *) continue ;; esac
-      is_zero "$old" && ! is_zero "$new" || continue
+      creates_ref "$old" "$new" || continue
       name=${ref#refs/heads/}
       case "$name" in
-        # worktree-* is the name Claude Code gives its own worktrees; the push check still applies.
+        # Claude Code names its worktree branches worktree-*. They can be created here but not pushed.
         main|master|worktree-*) continue ;;
       esac
       is_conventional "$name" && continue
@@ -44,10 +48,10 @@ case "$1" in
     ;;
   pushing)
     # shellcheck disable=SC2254
-    case "$3" in $OWNER_REPO) ;; *) cat >/dev/null; exit 0 ;; esac
+    case "$3" in $OWNER_REPO_GLOB) ;; *) cat >/dev/null; exit 0 ;; esac
     while read -r _local_ref local_oid remote_ref remote_oid; do
       case "$remote_ref" in refs/heads/*) ;; *) continue ;; esac
-      is_zero "$remote_oid" && ! is_zero "$local_oid" || continue
+      creates_ref "$remote_oid" "$local_oid" || continue
       name=${remote_ref#refs/heads/}
       case "$name" in main|master) continue ;; esac
       is_conventional "$name" || refuse "$name"

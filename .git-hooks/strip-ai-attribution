@@ -1,7 +1,8 @@
 #!/bin/sh
-# Removes AI attribution from a commit message. Git runs it for every repo through
-# a hook.* entry in the global config, so a repo with its own core.hooksPath is
-# covered too. Safe to run twice on one message.
+# Removes AI credit lines from a commit message, and adds the Claude Code session
+# line inside Claude Code. Git runs it for every repo through a hook.* entry in the
+# global config, so a repo with its own core.hooksPath is covered too. Safe to run
+# twice on one message.
 
 
 msg_file=$1
@@ -14,12 +15,15 @@ if [ -n "${CLAUDE_CODE_SESSION_ID:-}" ]; then
     --trailer "Claude-Session-Id: $CLAUDE_CODE_SESSION_ID" "$msg_file"
 fi
 
-# Curated AI identifiers. Deliberately NOT a broad ".*AI.*" match, which would
-# also strip human co-authors whose name merely contains "ai" (e.g. Mikhail).
-ai='claude|anthropic|copilot|cursor|codex|openai|chatgpt|gpt-[0-9]|gemini|aider|devin|codeium|windsurf|tabnine|sourcegraph|noreply@anthropic\.com'
+# AI tool names. A co-author counts as AI only if the whole name is a tool or the
+# email is at a tool's company, so people named Claude or Devin keep their credit.
+ai='claude|anthropic|copilot|cursor|codex|openai|chatgpt|gpt-[0-9]|gemini|aider|devin|codeium|windsurf|tabnine|sourcegraph'
+ai_name="(github[[:space:]]+)?($ai)([-a-z]*\[bot\])?[[:space:]]*(<|\$)"
+ai_email='<[^>]*@(anthropic\.com|openai\.com|cursor\.(com|sh)|aider\.chat|codeium\.com|windsurf\.com|tabnine\.com|cognition\.ai)>'
 
 tmp=$(mktemp "${TMPDIR:-/tmp}/commit-msg.XXXXXX") || exit 0
-grep -ivE "^[[:space:]]*co-authored-by:.*($ai)" "$msg_file" \
+grep -ivE "^[[:space:]]*co-authored-by:[[:space:]]*$ai_name" "$msg_file" \
+  | grep -ivE "^[[:space:]]*co-authored-by:.*$ai_email" \
   | grep -ivE "^[^[:alnum:]]*generated (with|by|using) .*($ai)" \
   > "$tmp"
 

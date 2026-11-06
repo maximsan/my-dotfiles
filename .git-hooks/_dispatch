@@ -3,23 +3,20 @@
 #
 # Goal: enforce a machine-wide rule that no commit is attributed to an AI agent,
 # regardless of which tool (Claude Code, Cursor, Copilot, Codex, ...) created it,
-# while still running each repository's OWN hooks transparently. This one script
-# is symlinked to every standard hook name; for any hook it first runs the
-# repo-local hook of the same name, then — only for `commit-msg` — strips AI
-# co-author trailers and "Generated with ..." bylines from the message.
+# while still running each repository's OWN hooks. This one script is symlinked to
+# the common hook names, so a repo's own copy of any other hook does not run. For
+# each linked hook it first runs the repo's hook of the same name. For `commit-msg`
+# it then removes AI credit lines from the message.
 #
-# Recursion safety: a naive dispatcher fork-bombs the machine if a repository's
-# local hook is a symlink OR a copy of this dispatcher (git -> dispatcher ->
-# local hook -> dispatcher -> ...). Two independent guards prevent that:
-#   1. an exported reentrancy marker, which also catches *copies* of this script
-#      that a path comparison cannot detect;
-#   2. a canonical (symlink-resolved) path comparison, so we never delegate to a
-#      local hook that is really this same file.
+# If a repo's own hook is a link to or a copy of this script, the script would
+# call itself forever. Two checks stop that:
+#   1. an exported variable recording the running hooks, which also catches copies;
+#   2. a comparison of real file paths, which catches links.
 
 hook_name="$(basename "$0")"
 
-# --- Guard 1: reentrancy marker (scoped per hook name) -------------------------
-# The ":name:" framing avoids substring collisions between hook names.
+# --- Check 1: is this hook already running? ------------------------------------
+# The colons stop one hook name matching inside a longer one.
 already_active=
 case ":${GIT_DISPATCH_ACTIVE:-}:" in
   *":$hook_name:"*) already_active=1 ;;
@@ -34,7 +31,7 @@ git_dir="$(git rev-parse --git-common-dir 2>/dev/null || git rev-parse --git-dir
 [ -n "$git_dir" ] || git_dir=".git"
 local_hook="$git_dir/hooks/$hook_name"
 
-# --- Guard 2: canonical path comparison ---------------------------------------
+# --- Check 2: is the repo's hook really this file? -----------------------------
 # Resolve symlinks (runs in a subshell via command substitution, so the `cd`
 # never affects the caller's working directory).
 canonical() {
@@ -53,8 +50,7 @@ canonical() {
 self_real=$(canonical "$0" 2>/dev/null)
 local_real=$(canonical "$local_hook" 2>/dev/null)
 
-# Delegate to the repo's own hook first — unless we are re-entering, it is
-# missing/not executable, or it resolves to this very dispatcher.
+# Run the repo's own hook first, if it exists, is executable, and is another file.
 if [ -z "$already_active" ] && [ -x "$local_hook" ] \
    && [ -n "$local_real" ] && [ "$local_real" != "$self_real" ]; then
   "$local_hook" "$@" || exit $?
