@@ -22,22 +22,17 @@ brew bundle dump --describe --file ~/.dotfiles/Brewfile
 
 ## Git Hooks
 
-The hook scripts are tracked in `.git-hooks/`. They reach every repo by two routes:
+`hook.*` entries in `.gitconfig` run two scripts from `.git-hooks/` in every repo, alongside the repo's own hooks. They
+need Git 2.54 or later; older Git skips them silently. Without `node` on the PATH, they let git continue.
 
-- `.gitconfig`'s `core.hooksPath` runs `_dispatch` under each common hook name. It runs the repo's own hook first, and works on Git versions older than 2.54.
-- `hook.*` entries in `.gitconfig` run `strip-ai-attribution` and `branch-name-rule` even in a repo with its own `core.hooksPath`. They need Git 2.54 or later, which added hooks defined in config.
-
-`strip-ai-attribution` removes AI `Co-Authored-By:` and "Generated with", "by" or "using" lines, and keeps human co-authors. Inside Claude Code it also adds a `Claude-Session-Id:` line. Running it twice on one message is safe.
-
-`branch-name-rule` refuses branch names outside `<type>/<lowercase-with-dashes>` in maximsan's GitHub repos.
-
-`.git-template/` is copied into each new repo. Its `commit-msg` hook runs the global one.
+- `strip-ai-attribution.mjs` removes AI `Co-Authored-By:` lines and "Generated with", "by" or "using" lines, and keeps
+  human co-authors. Inside Claude Code it adds a `Claude-Session-Id:` line.
+- `branch-name-rule.mjs` refuses branch names outside `<type>/<lowercase-with-dashes>` in maximsan's GitHub repos.
 
 ### Running hook tests
 
 ```zsh
-bash tests/commit-msg.test.sh
-bash tests/branch-name-rule.test.sh
+node --test
 ```
 
 ## Key Configuration
@@ -52,4 +47,4 @@ bash tests/branch-name-rule.test.sh
 
 ## Conventional Commits
 
-`commitizen` is installed (via Brew). Commit messages should follow Conventional Commits format (`feat:`, `fix:`, `chore:`, etc.) as enforced by the repo's style and tested by `tests/commit-msg.test.sh`.
+`commitizen` is installed (via Brew). Commit messages should follow Conventional Commits format (`feat:`, `fix:`, `chore:`, etc.) as enforced by the repo's style.

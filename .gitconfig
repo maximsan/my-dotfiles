@@ -8,10 +8,8 @@
 [core]
 	editor = code --wait
 	autocrlf = input
-	hooksPath = ~/.git-hooks
 [init]
 	defaultBranch = main
-	templateDir = ~/.git-template
 [pull]
 	rebase = false
 [alias]
@@ -32,12 +30,13 @@
 	skip = push -f --no-verify
 [http]
 	postBuffer = 524288000
+# Hooks for every repo. Each needs Git 2.54 or later. Without node, the hook passes instead of blocking git.
 [hook "strip-ai-attribution"]
 	event = commit-msg
-	command = \"$HOME/.git-hooks/strip-ai-attribution\"
+	command = command -v node >/dev/null || exit 0 && exec node \"$HOME/.git-hooks/strip-ai-attribution.mjs\"
 [hook "branch-name-creating"]
 	event = reference-transaction
-	command = \"$HOME/.git-hooks/branch-name-rule\" creating
+	command = command -v node >/dev/null || exit 0 && exec node \"$HOME/.git-hooks/branch-name-rule.mjs\" creating
 [hook "branch-name-pushing"]
 	event = pre-push
-	command = \"$HOME/.git-hooks/branch-name-rule\" pushing
+	command = command -v node >/dev/null || exit 0 && exec node \"$HOME/.git-hooks/branch-name-rule.mjs\" pushing
