@@ -2,7 +2,7 @@
 /**
  * Refuses branch names outside `<type>/<lowercase-with-dashes>`, such as `fix/login-retry`, in maximsan's GitHub repos.
  * Git runs it in every repo through hook entries in the global .gitconfig:
- *   creating: the reference-transaction hook, when any tool creates a local branch
+ *   creating: the hook git runs when any tool creates or changes a branch (reference-transaction)
  *   pushing:  the pre-push hook, when a new branch would reach GitHub
  * `git branch -m` skips reference-transaction, so only the push check catches a rename.
  */
@@ -44,11 +44,12 @@ const createdBranches = (input, columns) =>
 /**
  * The names a reference-transaction refuses. Its input lines are `<old id> <new id> <ref>`.
  * @param {string} input what git wrote to the hook
- * @param {(name: string) => boolean} existsOnOrigin whether GitHub already has the branch, which may be checked out
+ * @param {(name: string) => boolean} alreadyExists whether the branch exists here or on GitHub. Packing refs
+ *   reports existing branches as new, and a branch GitHub already has may be checked out.
  */
-export const refusedWhenCreating = (input, existsOnOrigin) =>
+export const refusedWhenCreating = (input, alreadyExists) =>
   createdBranches(input, { oldCommit: 0, newCommit: 1, ref: 2 }).filter(
-    (name) => !ALLOWED_LOCALLY.test(name) && !isConventional(name) && !existsOnOrigin(name),
+    (name) => !ALLOWED_LOCALLY.test(name) && !isConventional(name) && !alreadyExists(name),
   );
 
 /** The names a push refuses. Its input lines are `<local ref> <local id> <remote ref> <remote id>`. */
@@ -57,8 +58,8 @@ export const refusedWhenPushing = (input) =>
     (name) => !ALLOWED_ON_PUSH.test(name) && !isConventional(name),
   );
 
-export const refusal = (name) =>
-  `Branch name '${name}' breaks the naming rule. Use a kebab-case name starting with one of: ` +
+const refusalMessage = (name) =>
+  `Branch name '${name}' breaks the naming rule. Use a lowercase-with-dashes name starting with one of: ` +
   `${BRANCH_TYPES.join(", ")}, then a slash. Example: fix/login-retry.`;
 
 const gitOutput = (args) => {
@@ -69,15 +70,20 @@ const gitOutput = (args) => {
   }
 };
 
-const branchExistsOnOrigin = (name) => gitOutput(["show-ref", "--verify", `refs/remotes/origin/${name}`]) !== null;
+const branchAlreadyExists = (name) =>
+  gitOutput(["show-ref", "--verify", `refs/heads/${name}`]) !== null ||
+  gitOutput(["show-ref", "--verify", `refs/remotes/origin/${name}`]) !== null;
 
 /** The names this run refuses, from the hook's arguments and input. */
 const refusedNames = ([mode, ...hookArguments], input) => {
   if (mode === "creating") {
     const [state] = hookArguments;
-    const isOwnersRepo = OWNER_REPO_URL.test(gitOutput(["remote", "get-url", "origin"]) ?? "");
 
-    return state === "prepared" && isOwnersRepo ? refusedWhenCreating(input, branchExistsOnOrigin) : [];
+    if (state !== "prepared" || !OWNER_REPO_URL.test(gitOutput(["remote", "get-url", "origin"]) ?? "")) {
+      return [];
+    }
+
+    return refusedWhenCreating(input, branchAlreadyExists);
   }
 
   if (mode === "pushing") {
@@ -96,7 +102,7 @@ if (isRunDirectly) {
   const refused = refusedNames(process.argv.slice(2), readFileSync(0, "utf8"));
 
   if (refused.length > 0) {
-    console.error(refusal(refused[0]));
+    console.error(refusalMessage(refused[0]));
     process.exitCode = 1;
   }
 }

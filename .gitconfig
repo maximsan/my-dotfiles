@@ -30,13 +30,14 @@
 	skip = push -f --no-verify
 [http]
 	postBuffer = 524288000
-# Hooks for every repo. Each needs Git 2.54 or later. Without node, the hook passes instead of blocking git.
+# Hooks for every repo. They need Git 2.54 or later. Without node or the script, git skips them and carries on.
 [hook "strip-ai-attribution"]
 	event = commit-msg
-	command = command -v node >/dev/null || exit 0 && exec node \"$HOME/.git-hooks/strip-ai-attribution.mjs\"
+	command = test -f \"$HOME/.git-hooks/strip-ai-attribution.mjs\" && command -v node >/dev/null || exit 0 && exec node \"$HOME/.git-hooks/strip-ai-attribution.mjs\"
 [hook "branch-name-creating"]
 	event = reference-transaction
-	command = command -v node >/dev/null || exit 0 && exec node \"$HOME/.git-hooks/branch-name-rule.mjs\" creating
+	# Git runs this several times per change. Only the "prepared" run needs a check, so the others skip starting node.
+	command = [ \"$1\" = prepared ] && test -f \"$HOME/.git-hooks/branch-name-rule.mjs\" && command -v node >/dev/null || exit 0 && exec node \"$HOME/.git-hooks/branch-name-rule.mjs\" creating
 [hook "branch-name-pushing"]
 	event = pre-push
-	command = command -v node >/dev/null || exit 0 && exec node \"$HOME/.git-hooks/branch-name-rule.mjs\" pushing
+	command = test -f \"$HOME/.git-hooks/branch-name-rule.mjs\" && command -v node >/dev/null || exit 0 && exec node \"$HOME/.git-hooks/branch-name-rule.mjs\" pushing

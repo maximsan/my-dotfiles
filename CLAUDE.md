@@ -22,7 +22,7 @@ brew bundle dump --describe --file ~/.dotfiles/Brewfile
 
 ## Git Hooks
 
-`hook.*` entries in `.gitconfig` run two scripts from `.git-hooks/` in every repo, alongside the repo's own hooks. They
+`hook.*` entries in `.gitconfig` run two scripts from `.git-hooks/` in every repo, as well as the repo's own hooks. They
 need Git 2.54 or later; older Git skips them silently. Without `node` on the PATH, they let git continue.
 
 - `strip-ai-attribution.mjs` removes AI `Co-Authored-By:` lines and "Generated with", "by" or "using" lines, and keeps
