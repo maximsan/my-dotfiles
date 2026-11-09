@@ -44,8 +44,8 @@ const createdBranches = (input, columns) =>
 /**
  * The names a reference-transaction refuses. Its input lines are `<old id> <new id> <ref>`.
  * @param {string} input what git wrote to the hook
- * @param {(name: string) => boolean} alreadyExists whether the branch exists here or on GitHub. Packing refs
- *   reports existing branches as new, and a branch GitHub already has may be checked out.
+ * @param {(name: string) => boolean} alreadyExists whether the branch exists here or on GitHub. Git's ref clean-up,
+ *   `git pack-refs`, reports existing branches as new, and a branch GitHub already has may be checked out.
  */
 export const refusedWhenCreating = (input, alreadyExists) =>
   createdBranches(input, { oldCommit: 0, newCommit: 1, ref: 2 }).filter(
@@ -98,11 +98,16 @@ const refusedNames = ([mode, ...hookArguments], input) => {
 const isRunDirectly = process.argv[1] && realpathSync(process.argv[1]) === fileURLToPath(import.meta.url);
 
 if (isRunDirectly) {
-  // Read all input in every case: git writes it whether or not the hook needs it.
-  const refused = refusedNames(process.argv.slice(2), readFileSync(0, "utf8"));
+  // A failure in this script must never stop git: only a refused name does.
+  try {
+    // Read all input in every case: git writes it whether or not the hook needs it.
+    const refused = refusedNames(process.argv.slice(2), readFileSync(0, "utf8"));
 
-  if (refused.length > 0) {
-    console.error(refusalMessage(refused[0]));
-    process.exitCode = 1;
+    if (refused.length > 0) {
+      console.error(refusalMessage(refused[0]));
+      process.exitCode = 1;
+    }
+  } catch (error) {
+    console.error(`branch-name-rule: skipped the check. ${error.message}`);
   }
 }

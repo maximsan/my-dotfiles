@@ -36,7 +36,8 @@
 	command = test -f \"$HOME/.git-hooks/strip-ai-attribution.mjs\" && command -v node >/dev/null || exit 0 && exec node \"$HOME/.git-hooks/strip-ai-attribution.mjs\"
 [hook "branch-name-creating"]
 	event = reference-transaction
-	# Git runs this several times per change. Only the "prepared" run needs a check, so the others skip starting node.
+	# Git runs this up to three times per change. Only the run just before the change is saved, "prepared", checks the
+# name. The other runs skip starting node.
 	command = [ \"$1\" = prepared ] && test -f \"$HOME/.git-hooks/branch-name-rule.mjs\" && command -v node >/dev/null || exit 0 && exec node \"$HOME/.git-hooks/branch-name-rule.mjs\" creating
 [hook "branch-name-pushing"]
 	event = pre-push

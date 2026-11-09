@@ -44,7 +44,7 @@ const addSessionLine = (messageFile, sessionId) => {
     "--trailer",
     `Claude-Session-Id: ${sessionId}`,
     messageFile,
-  ]);
+  ], { stdio: ["ignore", "ignore", "pipe"] });
 };
 
 const run = (messageFile) => {
