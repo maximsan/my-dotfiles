@@ -15,6 +15,9 @@ const AI_BYLINE = new RegExp(`^[^\\p{L}\\p{N}]*generated (with|by|using) .*(${AI
 
 const CO_AUTHOR = /^\s*co-authored-by:/i;
 
+/** The trailer naming the Claude Code session. `claude --resume <id>` reopens it. */
+const SESSION_TRAILER = "Claude-Session-Id";
+
 /** A co-author whose whole name is a tool, such as "Claude" or "GitHub Copilot". People named Claude Monet keep credit. */
 const AI_CO_AUTHOR_NAME = new RegExp(`^\\s*co-authored-by:\\s*(github\\s+)?(${AI_TOOLS})([-a-z]*\\[bot\\])?\\s*(<|$)`, "i");
 
@@ -42,7 +45,7 @@ const addSessionLine = (messageFile, sessionId) => {
     "--if-exists",
     "addIfDifferent",
     "--trailer",
-    `Claude-Session-Id: ${sessionId}`,
+    `${SESSION_TRAILER}: ${sessionId}`,
     messageFile,
   ], { stdio: ["ignore", "ignore", "pipe"] });
 };
@@ -52,7 +55,7 @@ const run = (messageFile) => {
     return;
   }
 
-  // Claude Code sets this in every shell it starts. `claude --resume <id>` reopens the session.
+  // Claude Code sets this in every shell it starts.
   const sessionId = process.env.CLAUDE_CODE_SESSION_ID;
 
   if (sessionId) {
@@ -62,12 +65,14 @@ const run = (messageFile) => {
   writeFileSync(messageFile, withoutAiCredit(readFileSync(messageFile, "utf8")));
 };
 
-const isRunDirectly = process.argv[1] && realpathSync(process.argv[1]) === fileURLToPath(import.meta.url);
+const [, scriptPath, ...hookArguments] = process.argv;
+const isRunDirectly = scriptPath && realpathSync(scriptPath) === fileURLToPath(import.meta.url);
 
 if (isRunDirectly) {
   // A failure here must never stop a commit: the message just keeps its credit lines.
   try {
-    run(process.argv[2]);
+    const [messageFile] = hookArguments;
+    run(messageFile);
   } catch (error) {
     console.error(`strip-ai-attribution: left the message as it was. ${error.message}`);
   }

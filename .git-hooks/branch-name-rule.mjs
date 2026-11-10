@@ -19,6 +19,13 @@ const OWNER_REPO_URL = /github\.com[:/]maximsan\//;
 const NO_COMMIT = /^0+$/;
 
 const BRANCH_PREFIX = "refs/heads/";
+const ORIGIN = "origin";
+
+/** The first argument the hook entries in .gitconfig pass: which check to run. */
+const MODE = { creating: "creating", pushing: "pushing" };
+
+/** The reference-transaction run just before git saves a change. .gitconfig also skips node for every other run. */
+const PREPARED_STATE = "prepared";
 
 /** Claude Code names its worktree branches worktree-*. They may exist locally, but the push check refuses them. */
 const ALLOWED_LOCALLY = /^(main|master|worktree-.*)$/;
@@ -71,23 +78,23 @@ const gitOutput = (args) => {
 };
 
 const branchAlreadyExists = (name) =>
-  gitOutput(["show-ref", "--verify", `refs/heads/${name}`]) !== null ||
-  gitOutput(["show-ref", "--verify", `refs/remotes/origin/${name}`]) !== null;
+  gitOutput(["show-ref", "--verify", `${BRANCH_PREFIX}${name}`]) !== null ||
+  gitOutput(["show-ref", "--verify", `refs/remotes/${ORIGIN}/${name}`]) !== null;
 
 /** The names this run refuses, from the hook's arguments and input. */
 const refusedNames = ([mode, ...hookArguments], input) => {
-  if (mode === "creating") {
+  if (mode === MODE.creating) {
     const [state] = hookArguments;
 
-    if (state !== "prepared" || !OWNER_REPO_URL.test(gitOutput(["remote", "get-url", "origin"]) ?? "")) {
+    if (state !== PREPARED_STATE || !OWNER_REPO_URL.test(gitOutput(["remote", "get-url", ORIGIN]) ?? "")) {
       return [];
     }
 
     return refusedWhenCreating(input, branchAlreadyExists);
   }
 
-  if (mode === "pushing") {
-    const [, remoteUrl] = hookArguments;
+  if (mode === MODE.pushing) {
+    const [remoteName, remoteUrl] = hookArguments;
 
     return OWNER_REPO_URL.test(remoteUrl ?? "") ? refusedWhenPushing(input) : [];
   }
@@ -95,16 +102,17 @@ const refusedNames = ([mode, ...hookArguments], input) => {
   return [];
 };
 
-const isRunDirectly = process.argv[1] && realpathSync(process.argv[1]) === fileURLToPath(import.meta.url);
+const [, scriptPath, ...hookArguments] = process.argv;
+const isRunDirectly = scriptPath && realpathSync(scriptPath) === fileURLToPath(import.meta.url);
 
 if (isRunDirectly) {
   // A failure in this script must never stop git: only a refused name does.
   try {
     // Read all input in every case: git writes it whether or not the hook needs it.
-    const refused = refusedNames(process.argv.slice(2), readFileSync(0, "utf8"));
+    const [firstRefused] = refusedNames(hookArguments, readFileSync(0, "utf8"));
 
-    if (refused.length > 0) {
-      console.error(refusalMessage(refused[0]));
+    if (firstRefused) {
+      console.error(refusalMessage(firstRefused));
       process.exitCode = 1;
     }
   } catch (error) {

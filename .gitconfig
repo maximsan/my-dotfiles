@@ -37,7 +37,7 @@
 [hook "branch-name-creating"]
 	event = reference-transaction
 	# Git runs this up to three times per change. Only the run just before the change is saved, "prepared", checks the
-# name. The other runs skip starting node.
+# name, the PREPARED_STATE in branch-name-rule.mjs. The other runs skip starting node.
 	command = [ \"$1\" = prepared ] && test -f \"$HOME/.git-hooks/branch-name-rule.mjs\" && command -v node >/dev/null || exit 0 && exec node \"$HOME/.git-hooks/branch-name-rule.mjs\" creating
 [hook "branch-name-pushing"]
 	event = pre-push
