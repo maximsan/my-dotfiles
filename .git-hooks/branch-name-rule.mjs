@@ -82,9 +82,9 @@ const branchAlreadyExists = (name) =>
   gitOutput(["show-ref", "--verify", `refs/remotes/${ORIGIN}/${name}`]) !== null;
 
 /** The names this run refuses, from the hook's arguments and input. */
-const refusedNames = ([mode, ...hookArguments], input) => {
+const refusedNames = ([mode, ...modeArguments], input) => {
   if (mode === MODE.creating) {
-    const [state] = hookArguments;
+    const [state] = modeArguments;
 
     if (state !== PREPARED_STATE || !OWNER_REPO_URL.test(gitOutput(["remote", "get-url", ORIGIN]) ?? "")) {
       return [];
@@ -94,7 +94,7 @@ const refusedNames = ([mode, ...hookArguments], input) => {
   }
 
   if (mode === MODE.pushing) {
-    const [remoteName, remoteUrl] = hookArguments;
+    const [remoteName, remoteUrl] = modeArguments;
 
     return OWNER_REPO_URL.test(remoteUrl ?? "") ? refusedWhenPushing(input) : [];
   }
@@ -111,7 +111,7 @@ if (isRunDirectly) {
     // Read all input in every case: git writes it whether or not the hook needs it.
     const [firstRefused] = refusedNames(hookArguments, readFileSync(0, "utf8"));
 
-    if (firstRefused) {
+    if (firstRefused !== undefined) {
       console.error(refusalMessage(firstRefused));
       process.exitCode = 1;
     }
