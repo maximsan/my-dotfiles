@@ -34,6 +34,7 @@ need Git 2.54 or later; older Git skips them silently. Without `node` on the PAT
 ```zsh
 node --test
 # The scripts follow the my-skills lint rules, until this repo moves into my-skills.
+npm ci --prefix ~/projects/my/skills   # once, so its lint packages are installed
 npx --prefix ~/projects/my/skills eslint --config ~/projects/my/skills/eslint.config.mjs .git-hooks
 ```
 
