@@ -8,12 +8,7 @@ This is a macOS dotfiles repository. It contains shell configuration, git config
 
 ## Symlink Setup
 
-The dotfiles are activated by symlinking them:
-
-```zsh
-ln -s ~/.dotfiles/.zshrc ~/.zshrc
-ln -s ~/.dotfiles/.gitconfig ~/.gitconfig
-```
+The dotfiles are activated by symlinks. The commands are in step 3 of `README.md`.
 
 ## Package Management
 
@@ -27,12 +22,20 @@ brew bundle dump --describe --file ~/.dotfiles/Brewfile
 
 ## Git Hooks
 
-A global `commit-msg` hook lives at `~/.git-hooks/commit-msg` (referenced by `.gitconfig`'s `core.hooksPath`). It strips `Co-Authored-By:` lines from AI tools (Claude, Copilot, ChatGPT, Gemini, Cursor) while preserving human co-author lines.
+`hook.*` entries in `.gitconfig` run two scripts from `.git-hooks/` in every repo, as well as the repo's own hooks. They
+need Git 2.54 or later; older Git skips them silently. Without `node` on the PATH, they let git continue.
 
-### Running hook tests
+- `strip-ai-attribution.mjs` removes AI `Co-Authored-By:` lines and "Generated with", "by" or "using" lines, and keeps
+  human co-authors. Inside Claude Code it adds a `Claude-Session-Id:` line.
+- `branch-name-rule.mjs` refuses branch names outside `<type>/<lowercase-with-dashes>` in maximsan's GitHub repos.
+
+### Running hook tests and lint
 
 ```zsh
-bash tests/commit-msg.test.sh
+node --test
+# The scripts follow the my-skills lint rules, until this repo moves into my-skills.
+npm ci --prefix ~/projects/my/skills   # once, so its lint packages are installed
+npx --prefix ~/projects/my/skills eslint --config ~/projects/my/skills/eslint.config.mjs .git-hooks
 ```
 
 ## Key Configuration
@@ -47,4 +50,4 @@ bash tests/commit-msg.test.sh
 
 ## Conventional Commits
 
-`commitizen` is installed (via Brew). Commit messages should follow Conventional Commits format (`feat:`, `fix:`, `chore:`, etc.) as enforced by the repo's style and tested by `tests/commit-msg.test.sh`.
+`commitizen` is installed (via Brew). Commit messages should follow Conventional Commits format (`feat:`, `fix:`, `chore:`, etc.) as enforced by the repo's style.
