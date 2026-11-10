@@ -29,10 +29,12 @@ need Git 2.54 or later; older Git skips them silently. Without `node` on the PAT
   human co-authors. Inside Claude Code it adds a `Claude-Session-Id:` line.
 - `branch-name-rule.mjs` refuses branch names outside `<type>/<lowercase-with-dashes>` in maximsan's GitHub repos.
 
-### Running hook tests
+### Running hook tests and lint
 
 ```zsh
 node --test
+# The scripts follow the my-skills lint rules, until this repo moves into my-skills.
+npx --prefix ~/projects/my/skills eslint --config ~/projects/my/skills/eslint.config.mjs .git-hooks
 ```
 
 ## Key Configuration
