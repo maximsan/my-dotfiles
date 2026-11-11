@@ -2,8 +2,9 @@
 	name = maximsan
 	email = maximuzz@yandex.ru
 	
-[includeIf "gitdir:~/Projects/work/itrex/noom/"]
-	path = ~/Projects/work/itrex/noom/.gitconfig
+# Settings that stay on one Mac, such as work folders, live in this untracked file.
+[include]
+	path = ~/.gitconfig.local
 
 [core]
 	editor = code --wait
