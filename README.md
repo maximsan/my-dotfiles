@@ -20,6 +20,8 @@ git clone <repo> ~/.dotfiles
 
 ln -s ~/.dotfiles/.zshrc ~/.zshrc
 ln -s ~/.dotfiles/.gitconfig ~/.gitconfig
+# Git settings that stay on this Mac, such as work folders, go in ~/.gitconfig.local. It is in no repo.
+touch ~/.gitconfig.local
 ln -s ~/.dotfiles/.zshenv ~/.zshenv
 ln -s ~/.dotfiles/.git-hooks ~/.git-hooks
 ```
